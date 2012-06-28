@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	xmlns:comp="component.*" 
+	implements="component.StylePanel" 
+	styleName="stylePanel"
+	width="190" 
+	mouseEnabled="true"
+	title="@Resource(key='Image', bundle='Panel')" >
+		
+	<fx:Metadata>
+        [Event(name="styleChange", type="event.StyleChangeEvent")]
+	</fx:Metadata>
+		
+	<fx:Script><![CDATA[
+		
+		import mx.events.ColorPickerEvent;
+		import event.StyleChangeEvent;
+		import fxgeditor.parser.filters.IFilter;
+		import fxgeditor.parser.style.Style;
+		import fxgeditor.StyleObject;
+		import component.vo.StyleVo;
+		
+		[Bindable]
+		private var styleVo:StyleVo = new StyleVo();
+		
+		public function setItemStyle( o:StyleObject ):void
+		{
+			styleVo = new StyleVo();
+			itemName.text = o.id;
+			styleVo.alphaValue = o.opacity;
+			styleVo.href = o.href;
+			styleVo.filters = o.filters;
+			styleVo.colorTransform = o.colorTransform;
+		}
+		
+		public function set type( t:String ):void { styleVo.itemType = t; }
+		public function get type():String { return styleVo.itemType; }
+		
+		private function onNameChange( e:Event ):void 
+		{
+			var o:StyleObject = new StyleObject();
+			o.id = itemName.text;
+			dispatchEvent( new StyleChangeEvent(o) );
+		}
+		
+		private function onImageChanged():void 
+		{
+			var o:StyleObject = new StyleObject();
+			o.href = hrefText.text;
+			dispatchEvent( new StyleChangeEvent(o) );
+		}
+		
+	]]></fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout paddingBottom="5" />
+	</s:layout>
+	
+	<s:TextInput id="itemName" width="100%" change="onNameChange( event );" />
+	
+	<mx:TabNavigator id="tn" width="100%" color="0x323232" resizeToContent="true" paddingBottom="5">
+	
+		<mx:VBox id="imageBox" label="@Resource(key='Image', bundle='Panel')" >
+			<s:Label text="URL" />
+			<s:TextArea 
+				id="hrefText" 
+				width="100%" 
+				height="100"
+				text="{styleVo.href}" 
+			/>
+			<s:Button label="@Resource(key='Load', bundle='Panel')" click="onImageChanged()" />
+		</mx:VBox>
+		
+		<mx:Box label="@Resource(key='Prop', bundle='Panel')" horizontalScrollPolicy="off" verticalScrollPolicy="off" >
+			<comp:PropertyPanel 
+				id="transBox" 
+				styleVo="{styleVo}" 
+				width="{imageBox.width}"
+			/>
+			<s:Label text="@Resource(key='ColorTrans', bundle='Panel')" paddingLeft="5"/>
+			<comp:ColorTransPanel id="objectCt"
+				styleVo="{styleVo}"
+			/>
+		</mx:Box>
+		
+		<mx:Box label="@Resource(key='Filter', bundle='Panel')" horizontalScrollPolicy="off" verticalScrollPolicy="off" >
+			<comp:FilterPanel
+				id="objectFilters"
+				styleVo="{styleVo}"
+				width="{imageBox.width}"
+			/>
+		</mx:Box>
+		
+	</mx:TabNavigator>
+</s:TitleWindow>

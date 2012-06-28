@@ -1,0 +1,229 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+	creationComplete="init()">
+	
+	<fx:Metadata>
+        [Event(name="change", type="mx.events.ColorPickerEvent")]
+	</fx:Metadata>
+	
+	<fx:Script>
+		<![CDATA[
+			import component.color.ColorWheel;
+			import component.color.ColorMatrix;
+			import flash.display.BitmapData;
+			import flash.utils.ByteArray;
+			import mx.controls.Image;
+			import mx.containers.Canvas;
+			import mx.events.ColorPickerEvent;
+			
+			public var color:uint;
+
+			private var colorWheel:ColorWheel;
+			private var bmd:BitmapData;
+			private var cm:ColorMatrix;
+			private var radius:Number;
+			
+			[Bindable]
+			private var _rgbValue:String;
+
+			private var cMatrix:ColorMatrix;
+			
+			public function get rgbValue():uint { return uint( "0x" + _rgbValue ); }
+			public function set rgbValue( c:uint ):void 
+			{
+				_rgbValue = rgbToHex( c );
+				findColor();
+			}
+			
+			private function draw():void
+			{
+				if (!colorWheel)
+					return;
+				radius = colorWheelHolder.width /2;
+				colorWheel.graphics.clear();
+				colorWheel.draw(radius)
+				bmd = new BitmapData(colorWheel.width, colorWheel.height);
+				bmd.draw(colorWheel);
+			}
+			
+			private function init():void
+			{
+				colorWheel = new ColorWheel();
+				colorWheelHolder.rawChildren.addChild(colorWheel);
+				draw();
+				colorWheel.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+				colorWheel.addEventListener(MouseEvent.MOUSE_MOVE, mouseMoveHandler);
+				cMatrix = new ColorMatrix();
+				findColor();
+			}
+			
+			private function findColor():void
+			{
+				colorValue.text = _rgbValue;
+				colorBox.setStyle("backgroundColor", rgbValue );
+				/*
+				if ( !bmd || !rgbValue ) return;
+				//Saturation ===============
+				var r:int = int( _rgbValue.substr( 0, 2 ) );
+				var g:int = int( _rgbValue.substr( 2, 2 ) );
+				var b:int = int( _rgbValue.substr( 4, 2 ) );
+				saturationSl.value = Math.abs( r - g  + r - b ) / 2 / 25.6 ;
+				saturation();
+				//=============================
+				
+				//find Position in colorWheel
+				var pixels:ByteArray = bmd.getPixels( bmd.rect );
+				pixels.position = 0;
+				for( var y:uint=0; y< bmd.height ; y++ )
+				{
+				  for( var x:uint=0; x< bmd.width; x++ )
+				  {
+					  var px:uint = pixels.readUnsignedInt();
+					  if ( _rgbValue ==  px.toString(16 ).substr( 2 ).toUpperCase() ) 
+					  {
+						  getColor( x, y );
+						  colorPointer.move( x, y );
+					  }	
+				  }
+				}
+				*/
+			}
+			
+			private function mouseDownHandler(event:MouseEvent):void
+			{
+				processEvent(event);
+			}
+			
+			private function mouseMoveHandler(event:MouseEvent):void
+			{
+				if (!event.buttonDown)
+					return;
+				processEvent(event);
+			}
+			
+			private function processEvent(event:MouseEvent):void
+			{
+				var x:Number = event.localX;
+				var y:Number = event.localY;
+				getColor(x, y);
+				colorPointer.move(x + colorPointer.width / 2, 
+					y + colorPointer.height / 2);
+			}
+			
+			private function reset():void
+			{
+				colorBox.setStyle("backgroundColor", null);
+				colorValue.text = "";
+				saturationSl.value = 1;
+			}
+
+			private function getColor(x:Number, y:Number):void
+			{
+				var color:Number = bmd.getPixel(x, y);
+				if (!atArea(x, y))
+					return;
+				cm = new ColorMatrix();
+				cm.colorize(color);
+				cm.adjustSaturation(saturationSl.value);
+				
+				colorBox.setStyle("backgroundColor", color);
+				colorValue.text = _rgbValue = rgbToHex(color);
+				
+				var cEvent:ColorPickerEvent = new ColorPickerEvent( ColorPickerEvent.CHANGE  );
+				cEvent.color = rgbValue;
+				dispatchEvent( cEvent );
+			}
+
+			private function saturation():void
+			{
+				var c:ColorMatrix = new ColorMatrix();
+				c.adjustSaturation(saturationSl.value);
+				c.adjustBrightness(brightnessSl.value);
+				colorWheel.filters = [c.filter];
+				bmd = new BitmapData(colorWheel.width, colorWheel.height);
+				bmd.draw(colorWheel);
+				getColor(colorPointer.x, colorPointer.y);
+				
+			}
+
+			private function rgbToHex(value:uint):String {
+				var str:String = value.toString(16).toUpperCase();
+				str = String("000000" + str).substr(-6);
+				return str;
+			}
+
+			private function atArea(_x:Number, _y:Number):Boolean
+			{
+				var x:Number = _x - radius;
+				var y:Number = _y - radius;
+				var xy:Number = Math.sqrt(x * x + y * y);
+				if (xy < radius) 
+					return true;
+				else
+					return false;
+			}
+
+		]]>
+	</fx:Script>
+	
+	<mx:Canvas
+		id="colorWheelHolder"
+		width="100%"
+		height="{colorWheelHolder.width}"
+		resize="draw()"
+	/>
+	<mx:Canvas
+		id="colorPointer"
+		width="4"
+		height="4"
+		borderStyle="solid"
+		borderColor="#363636"
+		mouseEnabled="false"
+	/>
+	<s:HGroup
+		width="100%"
+		horizontalAlign="center"
+		verticalAlign="middle"
+	>
+		<mx:Canvas
+			id="colorBox"
+			width="100%"
+			height="20"
+			borderStyle="solid"
+			cornerRadius="8"
+		 />
+		<s:Label
+			text="#"
+			id="colorNumberLabel"
+			color="#363636"
+		/>
+		<s:TextInput
+			width="100%"
+			id="colorValue"
+		/>
+		 <!--	cornerRadius="8"
+		-->
+	</s:HGroup>
+
+	<s:HSlider
+		minimum="0"
+		maximum="2"
+		snapInterval="0.01"
+		width="{colorWheelHolder.width}"
+		change="saturation()"
+		id="saturationSl"
+		liveDragging="true"
+		value="1"
+	/>
+	<s:HSlider
+		minimum="-100"
+		maximum="10"
+		snapInterval="1"
+		width="{colorWheelHolder.width}"
+		change="saturation()"
+		id="brightnessSl"
+		liveDragging="true"
+		value="0"
+	/>
+	
+</s:VGroup>

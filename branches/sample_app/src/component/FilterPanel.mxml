@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:gradient="component.color.gradient.*" minHeight="80" maxHeight="400">
+	
+	<fx:Declarations>
+	</fx:Declarations>
+	
+	<fx:Script><![CDATA[
+		
+		import flash.utils.getDefinitionByName;
+		import flash.utils.getQualifiedClassName;
+		import flash.events.Event;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Spacer;
+		import mx.core.UIComponent
+		import mx.events.ListEvent;
+		import spark.events.IndexChangeEvent;
+
+		import fxgeditor.FilterParameters;
+		import fxgeditor.StyleObject;
+		import component.vo.StyleVo;
+		import event.StyleChangeEvent;
+		import fxgeditor.parser.style.Style;
+		import fxgeditor.parser.filters.*;
+		
+		public static const FILTER_PATH_STRING:String = "fxgeditor.parser.filters::";
+		
+		public static const PARAM_MENU_WIDTH:Number = 60;
+		
+		[Bindable]
+		private var _styleVo:StyleVo;
+		[Bindable]
+		private var _filterLabels:ArrayCollection;
+		
+		private var _currentFilter:IFilter;
+		
+		public function setFilters():void
+		{
+			var fls:Array = [];
+			for each( var f:String in StyleVo.FILTERS ) 
+				fls.push( { label:f, selected:false } );
+				
+			_filterLabels = new ArrayCollection( fls );
+		}
+		
+		private function checkAppliedFilters(): void
+		{
+			setFilters();
+			var fs:Array = _styleVo.filters;
+			for each( var f:IFilter in fs ) 
+			{
+				var fname:String = getQualifiedClassName( f ).replace( FILTER_PATH_STRING , "");
+				for ( var i:int = 0; i < _filterLabels.length; i++ ) 
+					if ( _filterLabels[i].label == fname ) _filterLabels[i].selected = true;
+			}
+			
+			if (!fs) _styleVo.filters = [];
+		}
+		
+		private function getFilter( name:String ):IFilter
+		{
+			for each( var f:IFilter in _styleVo.filters ) 
+			{
+				var fname:String = getQualifiedClassName( f ).replace( FILTER_PATH_STRING , "");
+				if ( fname == name ) 
+					return f;
+			}
+			
+			f = Style.getFilterByName( name );
+			_styleVo.filters.push( f );
+			return f;
+		}
+		
+		private function removeFilter( name:String ):void 
+		{
+			var Cl:Class = getDefinitionByName( FILTER_PATH_STRING + name ) as Class;
+			for ( var i:int = 0; i < _styleVo.filters.length; i++ )
+				if ( _styleVo.filters[i] is Cl ) _styleVo.filters.splice( i, 1 );
+		}
+		
+		private function hideMenus():void
+		{
+			_blurBox.visible = _blurBox.includeInLayout = false;
+			_grad.visible = _grad.includeInLayout = false;
+			var children:Array = params.getChildren();
+			for each( var m:UIComponent in children )
+				m.visible = m.includeInLayout = false;
+		}
+		
+		private function showMenus( menus:Array , showGradation:Boolean = false ):void
+		{
+			params.creationPolicy = "all";
+			params.createComponentsFromDescriptors()
+			hideMenus();
+			var children:Array = params.getChildren();
+			for each( var i:int in menus )
+				children[i].visible = children[i].includeInLayout = true;
+			
+			if( menus.indexOf( 0 ) != -1 )
+				_blurBox.visible = _blurBox.includeInLayout = true;
+			
+			if ( showGradation )
+				_grad.visible = _grad.includeInLayout = true;
+				
+			validateNow();
+		}
+
+		private function onChange( e:IndexChangeEvent ):void
+		{
+			hideMenus();
+			if ( !filterList.dataProvider[e.newIndex] ) return;
+			var current:String = filterList.selectedItem.label;
+			
+			if ( current == "BlurFilter" ) 
+				showMenus( [ 0 , 1 , 2 ] );	
+			if ( current == "DropShadowFilter" )
+				showMenus( [ 0 , 1 , 2, 3, 4, 5 , 6 , 15 ] );
+			if ( current == "GlowFilter" )
+				showMenus( [ 0 , 1 , 2, 3, 4 , 5,  6, 7 , 13 , 14] );	
+			if ( current == "BevelFilter" )
+				showMenus( [ 0 , 1 , 2, 3, 4 , 5, 8, 9, 10, 11 , 12 , 14] );
+			if ( current == "GradientBevelFilter" )
+				showMenus( [ 0 , 1 , 2, 3, 4 , 5, 12 , 14 ] , true );
+			if ( current == "GradientGlowFilter" )
+				showMenus( [ 0 , 1 , 2, 3, 4 , 5, 12 , 14 ] , true );
+			if ( current == "ColorMatrixFilter" )
+				showMenus( [16] );
+		}
+		
+		private function onClick():void
+		{
+			if ( !filterList.selectedItem ) return;
+			if ( filterList.selectedItem.selected )
+			{
+				_currentFilter = getFilter(  filterList.selectedItem.label );
+				showPrametes();
+			}else
+				removeFilter( filterList.selectedItem.label );
+				
+			dispatchStyleChange();
+		}
+		
+		private function showPrametes():void
+		{
+			if ( !_currentFilter ) return;
+			var o:FilterParameters = _currentFilter.getPrameters();
+			_bx.value = _bx_by.value = o.blurX;
+			_by.value = o.blurY;
+			_qt.value = o.quality;
+			_str.value = o.strength;
+			_dist.value = o.distance;
+			_angle.value = o.angle;
+			_cl.selectedColor = o.color;
+			_al.value = o.alpha;
+			_hc.selectedColor = o.highlightColor;
+			_ha.value = o.highlightAlpha;
+			_sc.selectedColor = o.shadowColor;
+			_sa.value = o.shadowAlpha;
+			_type.label = o.type;
+			_inner.selected = o.inner;
+			_ko.selected = o.knockout;
+			_ho.selected = o.hideObject;
+			
+			if ( o.matrix ) {
+				_mr.text = o.matrix.concat().slice( 0, 4 ).join(",");
+				_mg.text = o.matrix.concat().slice( 5, 9 ).join(",");
+				_mb.text = o.matrix.concat().slice( 10, 14 ).join(",");
+				_ma.text = o.matrix.concat().slice( 15, 19 ).join(",");
+			}
+			
+			if ( o.colors ) 
+				_grad.parameters = o;
+		}
+		
+		private function onValueChange():void
+		{
+			var o:FilterParameters = new FilterParameters();
+			o.blurX = _bx.value;
+			o.blurY = _by.value;
+			o.quality = _qt.value;
+			o.strength = _str.value;
+			o.distance = _dist.value;
+			o.angle = _angle.value;
+			o.color = _cl.selectedColor;
+			o.alpha = _al.value;
+			o.highlightColor = _hc.selectedColor;
+			o.highlightAlpha = _ha.value;
+			o.shadowColor = _sc.selectedColor;
+			o.shadowAlpha = _sa.value;
+			o.type = _type.label;
+			o.inner = _inner.selected;
+			o.knockout = _ko.selected;
+			o.hideObject = _ho.selected;
+			
+			if ( _ma.visible ) 
+			{
+				var r:Array = _mr.text.split(",");
+				var g:Array = _mg.text.split(",");
+				var b:Array = _mb.text.split(",");
+				var a:Array = _ma.text.split(",");
+				o.matrix = r.concat(g.concat(b.concat(a) ) );
+			}
+			
+			if ( _grad.visible ) 
+			{
+				var gparam:FilterParameters = _grad.parameters;
+				o.colors = gparam.colors;
+				o.alphas = gparam.alphas;
+				o.ratios = gparam.ratios;
+			}
+				
+			if( _currentFilter )
+				_currentFilter.parsePrameters( o );
+			
+			dispatchStyleChange();
+		}
+		
+		private function onBlurChange():void
+		{
+			_bx.value = _by.value = _bx_by.value;
+			onValueChange();
+		}
+		
+		private function dispatchStyleChange():void
+		{
+			var s:StyleObject = new StyleObject();
+			s.filters = _styleVo.filters.concat();
+			dispatchEvent( new StyleChangeEvent( s, true ) );
+		}
+		
+		public function get styleVo():StyleVo { return _styleVo; }
+		public function set styleVo(value:StyleVo):void 
+		{
+			_styleVo = value;
+			checkAppliedFilters();
+		}
+	
+	]]></fx:Script>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+	</fx:Style>
+	
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+
+	<s:List id="filterList" width="100%" height="80" dataProvider="{_filterLabels}" change="onChange(event)" click="onClick()">
+	       <s:itemRenderer>
+			<fx:Component>
+			 <s:ItemRenderer>
+				 
+					 <fx:Script>
+						 <![CDATA[
+							[Bindable]
+							public  var _label:String;
+							[Bindable]
+							public var _selected:Boolean;
+							override public function set data( value:Object ):void
+							{
+								_label = value.label;
+								_selected = value.selected;
+								super.data = value;
+							}
+						 ]]>
+					 </fx:Script>
+					
+					<s:layout>
+						<s:HorizontalLayout verticalAlign="middle" />
+					</s:layout>
+					
+					<s:CheckBox id="checkBox" selected="{_selected}" click="data.selected = checkBox.selected;" />
+					<s:Label text="{_label}" />
+					
+				</s:ItemRenderer>
+            </fx:Component>
+			
+        </s:itemRenderer>
+	</s:List>
+	
+	<s:Scroller width="{filterList.width}" maxHeight="{this.maxHeight-filterList.height}" horizontalScrollPolicy="off">
+		<s:Group width="100%">
+				
+			<s:layout>
+				<s:VerticalLayout paddingBottom="5" />
+			</s:layout>
+			
+			<gradient:GradationFilter id="_grad" visible="false" includeInLayout="false" 
+				change="onValueChange()" 
+			/>
+			
+			<s:HGroup id="_blurBox" width="100%" visible="false" includeInLayout="false" horizontalAlign="center">
+				<s:Label text="Blur" />
+				<s:HSlider id="_bx_by" maximum="100.0" liveDragging="true" change="onBlurChange();" />
+			</s:HGroup>
+			
+			<mx:Form id="params" creationPolicy="none" paddingTop="0" paddingBottom="0" autoLayout="true" labelWidth="{PARAM_MENU_WIDTH}">
+				
+				<mx:FormItem label="BlurX" creationPolicy="auto">
+					<mx:NumericStepper id="_bx" stepSize="1" maximum="100.0" change="onValueChange()" width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="BlurY" creationPolicy="auto">
+					<mx:NumericStepper id="_by" stepSize="1" maximum="100.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Quality" creationPolicy="auto">
+					<mx:NumericStepper id="_qt" stepSize="1" maximum="3" change="onValueChange()"  width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Strength" creationPolicy="auto">
+					<mx:NumericStepper id="_str" stepSize="0.1" maximum="10.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Distance" creationPolicy="auto">
+					<mx:NumericStepper id="_dist" stepSize="1" maximum="100.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Angle" creationPolicy="auto">
+					<mx:NumericStepper id="_angle" stepSize="1" maximum="360.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Color" creationPolicy="auto">
+					<mx:ColorPicker id="_cl" change="onValueChange()" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Alpha" creationPolicy="auto">
+					<mx:NumericStepper id="_al" stepSize="0.1" maximum="1.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Highlight Color" creationPolicy="auto">
+					<mx:ColorPicker id="_hc" change="onValueChange()"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Highlight Alpha" creationPolicy="auto">
+					<mx:NumericStepper id="_ha" stepSize="0.1" maximum="1.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Shadow Color" creationPolicy="auto">
+					<mx:ColorPicker id="_sc" change="onValueChange()"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Shadow Alpha" creationPolicy="auto">
+					<mx:NumericStepper id="_sa" stepSize="0.1" maximum="1.0" change="onValueChange()"  width="{PARAM_MENU_WIDTH}"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Type" creationPolicy="auto">
+					<mx:PopUpMenuButton id="_type" dataProvider="{StyleVo.GRADATION_FILTER_TYPE}" itemClick="onValueChange();" width="{PARAM_MENU_WIDTH}" openAlways="true" />
+				</mx:FormItem>
+				
+				<mx:FormItem label="Inner" creationPolicy="auto">
+					<s:CheckBox id="_inner" change="onValueChange()"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Knockout" creationPolicy="auto">
+					<s:CheckBox id="_ko" change="onValueChange()"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="HideObject" creationPolicy="auto">
+					<s:CheckBox id="_ho" change="onValueChange()"/>
+				</mx:FormItem>
+				
+				<mx:FormItem label="Matrix" creationPolicy="auto">
+					<s:TextInput id="_mr" width="{PARAM_MENU_WIDTH}" change="onValueChange()"/>
+					<s:TextInput id="_mg" width="{PARAM_MENU_WIDTH}" change="onValueChange()"/>
+					<s:TextInput id="_mb" width="{PARAM_MENU_WIDTH}" change="onValueChange()"/>
+					<s:TextInput id="_ma" width="{PARAM_MENU_WIDTH}" change="onValueChange()"/>
+				</mx:FormItem>
+				
+			</mx:Form>
+		
+		</s:Group>
+	</s:Scroller>
+</s:Group>

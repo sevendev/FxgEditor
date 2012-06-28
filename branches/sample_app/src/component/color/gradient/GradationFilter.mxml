@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gradient:Gradation xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:gradient="component.color.gradient.*" creationComplete="init()">
+	
+	
+	<fx:Script>
+		<![CDATA[
+		
+		import fxgeditor.FilterParameters;
+		import fxgeditor.parser.style.IGradient;
+		import fxgeditor.parser.style.LinearGradient;
+		
+		public function set parameters( o:FilterParameters ):void
+		{
+			var _g:IGradient = new LinearGradient();
+			_g.newPrimitive();
+			if ( o.colors.length )
+			{
+				_g.colors = o.colors;
+				_g.alphas = o.alphas;
+				_g.ratios = o.ratios;
+			}
+			gradient =  _g;
+		}
+		
+		public function get parameters():FilterParameters 
+		{
+			var o:FilterParameters = new FilterParameters();
+			o.colors = g.colors;
+			o.alphas = g.alphas;
+			o.ratios = g.ratios;
+			return o;
+		}
+		
+		override public function exit():void
+		{
+			if ( !lineScr ) return;
+			gradatinPane.removeChild( lineScr );
+			gradatinPane.removeChild( gradationScr );
+			gradationScr = null;
+			g = null;
+		}
+		
+		override public function init():void 
+		{
+			typeSelecter.visible = typeSelecter.includeInLayout = false;
+			xOffset = 3;
+			super.init();
+		}
+		
+		]]>
+	</fx:Script>
+	
+	
+	
+</gradient:Gradation>

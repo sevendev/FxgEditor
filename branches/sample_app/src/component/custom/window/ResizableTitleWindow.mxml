@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow 
+	 xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" 
+	creationComplete="init()"  
+	removedFromStage="onRemove()" 
+	mouseEnabled="true"
+	>
+		
+	<fx:Metadata>
+		[Event(name="resize", type="mx.events.ResizeEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+	import flash.display.Sprite;
+	import flash.events.MouseEvent;
+	import flash.display.GraphicsPathCommand;
+	import flash.geom.Point;
+	import mx.events.ResizeEvent;
+	import spark.core.SpriteVisualElement;
+	
+	public static const iconSize:Number = 10;
+	public static const iconColor:uint = 0xcccccc;
+	public static const iconPadding:Number = 5;
+	
+	private var resizeIcon:SpriteVisualElement;
+	private var clickPoint:Point;
+	
+	public function init():void 
+	{
+		createResizeIcon();
+	}
+	
+	private function createResizeIcon():void 
+	{
+		resizeIcon = new SpriteVisualElement();
+		var sCommand:Vector.<int> = Vector.<int>([ GraphicsPathCommand.MOVE_TO, GraphicsPathCommand.LINE_TO, GraphicsPathCommand.LINE_TO ]);
+		var sVertice:Vector.<Number> = Vector.<Number>([ iconSize , 0, 0, iconSize, iconSize , iconSize]);
+		resizeIcon.graphics.clear();
+		resizeIcon.graphics.lineStyle( iconPadding , 0, 0 );
+		resizeIcon.graphics.beginFill( iconColor , 1 );
+		resizeIcon.graphics.drawPath( sCommand, sVertice );
+		resizeIcon.graphics.endFill();
+		resizeIcon.x = this.width - iconSize - iconPadding;
+		resizeIcon.y = this.height - iconSize - iconPadding - 15;
+		resizeIcon.addEventListener( MouseEvent.MOUSE_DOWN, dragIcon );
+		this.addElement( resizeIcon );
+	}
+	
+	private function dragIcon( e:MouseEvent ) :void 
+	{
+		clickPoint = new Point( resizeIcon.mouseY, resizeIcon.mouseY );
+		this.stage.addEventListener( MouseEvent.MOUSE_MOVE, onDragging );
+		this.stage.addEventListener( MouseEvent.MOUSE_UP, onDragFinish );
+	}
+	
+	private function onDragging( e:MouseEvent ) :void 
+	{
+		resizeIcon.x = this.mouseX - clickPoint.x;
+		resizeIcon.y = this.mouseY - clickPoint.y;
+		this.width = resizeIcon.x + iconSize + iconPadding;
+		this.height = resizeIcon.y + iconSize + iconPadding + 15;
+		dispatchEvent( new ResizeEvent( ResizeEvent.RESIZE  ) );
+	}
+	
+	private function onDragFinish( e:MouseEvent ) :void 
+	{ 
+		if ( !this.stage ) return;
+		this.stage.removeEventListener( MouseEvent.MOUSE_MOVE, onDragging );
+		this.stage.removeEventListener( MouseEvent.MOUSE_MOVE, onDragging );
+	}
+	
+	private function onRemove():void
+	{
+		removeElement( resizeIcon );
+		resizeIcon.removeEventListener( MouseEvent.MOUSE_DOWN, dragIcon );
+		this.stage.removeEventListener( MouseEvent.MOUSE_MOVE, onDragging );
+		this.stage.removeEventListener( MouseEvent.MOUSE_MOVE, onDragging );
+	}
+	
+	]]></fx:Script>
+	
+	
+</s:TitleWindow>

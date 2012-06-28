@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	xmlns:comp="component.*" styleName="stylePanel">
+	
+	<fx:Metadata>
+        [Event(name="styleChange", type="event.StyleChangeEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+	
+		import mx.events.SliderEvent;
+		import mx.events.MenuEvent;
+		import fxgeditor.parser.style.Style;
+		import fxgeditor.StyleObject;
+		import event.StyleChangeEvent;
+		import component.vo.StyleVo;
+		
+		[Bindable]
+		private var _styleVo:StyleVo;
+		
+		private function resetTransform():void 
+		{
+			var o:StyleObject = new StyleObject();
+			o.matrix = new Matrix();
+			dispatchEvent( new StyleChangeEvent( o, true ) );
+		}
+		
+		private function onAlphaChange( e:SliderEvent ):void 
+		{
+			var o:StyleObject = new StyleObject();
+			o.opacity = e.value;
+			dispatchEvent( new StyleChangeEvent( o, true ) );
+		}
+		
+		private function onBlendChange( e:MenuEvent ):void 
+		{
+			var o:StyleObject = new StyleObject();
+			o.blendMode = e.label;
+			dispatchEvent( new StyleChangeEvent( o, true ) );
+			objectBlend.label = e.label;
+		}
+		
+		public function get styleVo():StyleVo { return _styleVo; }
+		public function set styleVo(value:StyleVo):void 
+		{
+			_styleVo = value;
+		}
+		
+	]]></fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout paddingLeft="3" paddingRight="3" />
+	</s:layout>
+	
+	<s:Label text="@Resource(key='GlobalOpacity', bundle='Panel')" />
+	
+	<mx:HSlider
+		minimum="0"
+		maximum="1"
+		snapInterval="0.01"
+		width="100%"
+		change="onAlphaChange(event)"
+		id="objectAlpha"
+		liveDragging="true"
+		tickInterval="0.5"
+		value="{_styleVo.alphaValue}"
+	/>
+	<mx:Form paddingTop="0" paddingBottom="0">
+		<mx:FormItem label="@Resource(key='Blend', bundle='Panel')">
+			<mx:PopUpMenuButton
+				id="objectBlend" 
+				label="{_styleVo.blendMode}" 
+				dataProvider="{StyleVo.BLEND_MODE}" 
+				itemClick="onBlendChange(event)"
+				openAlways="true" 
+			/>
+		</mx:FormItem>
+	</mx:Form>
+
+</s:Group>

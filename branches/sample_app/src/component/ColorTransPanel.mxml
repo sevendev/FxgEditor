@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" >
+	
+	<fx:Script>
+		<![CDATA[
+		import component.vo.StyleVo;
+		import event.StyleChangeEvent;
+		import flash.geom.ColorTransform;
+		import fxgeditor.StyleObject;
+		
+		[Bindable]
+		private var _styleVo:StyleVo;
+		
+		[Bindable]
+		private var rmValue:Number;
+		[Bindable]
+		private var gmValue:Number;
+		[Bindable]
+		private var bmValue:Number;
+		[Bindable]
+		private var amValue:Number;
+		
+		[Bindable]
+		private var roValue:Number;
+		[Bindable]
+		private var goValue:Number;
+		[Bindable]
+		private var boValue:Number;
+		[Bindable]
+		private var aoValue:Number;
+		
+		public function get styleVo():StyleVo { return _styleVo; }
+		public function set styleVo(value:StyleVo):void
+		{
+			_styleVo = value;
+			setValues();
+		}
+		
+		private function setValues():void
+		{
+			if ( !_styleVo.colorTransform ) _styleVo.colorTransform = new ColorTransform();
+			rmValue = _styleVo.colorTransform.redMultiplier;
+			gmValue = _styleVo.colorTransform.greenMultiplier;
+			bmValue = _styleVo.colorTransform.blueMultiplier;
+			amValue = _styleVo.colorTransform.alphaMultiplier;
+			roValue = _styleVo.colorTransform.redOffset;
+			goValue = _styleVo.colorTransform.greenOffset;
+			boValue = _styleVo.colorTransform.blueOffset;
+			aoValue = _styleVo.colorTransform.alphaOffset;
+		}
+		
+		private function onChange():void
+		{
+			if ( !_styleVo ) return;
+			var o:StyleObject = new StyleObject();
+			if ( !_styleVo.colorTransform ) _styleVo.colorTransform = new ColorTransform();
+			_styleVo.colorTransform.redMultiplier = rmValue;
+			_styleVo.colorTransform.greenMultiplier = gmValue;
+			_styleVo.colorTransform.blueMultiplier = bmValue;
+			_styleVo.colorTransform.alphaMultiplier = amValue;
+			_styleVo.colorTransform.redOffset = roValue;
+			_styleVo.colorTransform.greenOffset = goValue;
+			_styleVo.colorTransform.blueOffset = boValue;
+			_styleVo.colorTransform.alphaOffset = aoValue;
+			o.colorTransform = _styleVo.colorTransform;
+			dispatchEvent( new StyleChangeEvent( o, true ) );
+		}
+		
+		private function reset():void
+		{
+			_styleVo.colorTransform = null;
+			setValues();
+			onChange();
+		}
+		
+		]]>
+	</fx:Script>
+	
+	
+	<s:layout>
+		<s:VerticalLayout />
+	</s:layout>
+
+	<mx:Form labelWidth="40"  paddingTop="3" paddingBottom="0" verticalGap="1" >
+		
+		<mx:FormItem label="@Resource(key='rOffset', bundle='Panel')">
+			<s:HSlider id="_ro" liveDragging="true" value="@{roValue}" change="onChange()" stepSize="1" minimum="-255" maximum="255" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='gOffset', bundle='Panel')">
+			<s:HSlider id="_go" liveDragging="true" value="@{goValue}" change="onChange()" stepSize="1" minimum="-255" maximum="255" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='bOffset', bundle='Panel')">
+			<s:HSlider id="_bo" liveDragging="true" value="@{boValue}" change="onChange()" stepSize="1" minimum="-255" maximum="255" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='aOffset', bundle='Panel')">
+			<s:HSlider id="_ao" liveDragging="true" value="@{aoValue}" change="onChange()" stepSize="1" minimum="-255" maximum="255" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='rMulti', bundle='Panel')">
+			<s:HSlider id="_rm" liveDragging="true" value="@{rmValue}" change="onChange()" stepSize="0.1" maximum="2" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='gMulti', bundle='Panel')">
+			<s:HSlider id="_gm" liveDragging="true" value="@{gmValue}" change="onChange()" stepSize="0.1" maximum="2" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='bMulti', bundle='Panel')">
+			<s:HSlider id="_bm" liveDragging="true" value="@{bmValue}" change="onChange()" stepSize="0.1" maximum="2" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='aMulti', bundle='Panel')">
+			<s:HSlider id="_am" liveDragging="true" value="@{amValue}" change="onChange()" stepSize="0.1" maximum="2" />
+		</mx:FormItem>
+
+	</mx:Form>
+	
+	<s:HGroup width="100%" horizontalAlign="center">
+		<s:Button label="@Resource(key='Reset', bundle='Panel')" click="reset()" />
+	</s:HGroup>
+	
+</s:Group>

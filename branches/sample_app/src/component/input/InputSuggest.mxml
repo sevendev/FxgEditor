@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup  xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	creationComplete="init()" 
+	removedFromStage="onRemove()"
+	>
+		
+	<fx:Metadata>
+		[Event(name="itemClick", type="mx.events.ItemClickEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+	
+	import flash.events.Event;
+	import flash.geom.Point;
+	import mx.events.ListEvent;
+	import mx.events.ItemClickEvent;
+	import mx.controls.List;
+	import mx.core.UIComponent;
+
+	[Bindable]
+	private var _currentData:Array;
+	private var _dataProvider:Array;
+	private var _currentItem:String;
+	
+	public function get dataProvider():Array { return _dataProvider; }
+	public function set dataProvider(value:Array):void { _dataProvider = value; }	
+	
+	public function get currentItem():String { return _currentItem; }
+	public function set currentItem(value:String):void 
+	{ 
+		_currentItem = value;
+		input.text = _currentItem;
+	}
+	
+	private function init():void 
+	{
+		removeElement( lst );
+		this.parent.addChild( lst );
+	}
+	
+	private function onRemove():void 
+	{
+		if ( this.parent.contains( lst ) && !this.contains( lst ) )
+			this.parent.removeChild( lst );
+	}
+			
+	private function onTextChange( e:Event):void
+	{
+		lst.visible = searchStrings();
+	}
+	
+	private function onItemSelect( e:ListEvent ):void 
+	{
+		_currentItem = List( e.target ).selectedItem as String ;
+		input.text = _currentItem;
+		lst.visible = false;
+		
+		var ev:ItemClickEvent = new ItemClickEvent( ItemClickEvent.ITEM_CLICK );
+		ev.index = 0;
+		ev.label = _currentItem;
+		dispatchEvent( ev );
+	}
+	
+	private function onShowMenu():void 
+	{
+		var reg:Point = new Point( input.x , input.y + input.height );
+		reg = UIComponent( this.parent ).globalToContent ( this.contentToGlobal( reg ) );
+		lst.x = reg.x;
+		lst.y = reg.y;
+	}
+	
+	private function searchStrings():Boolean 
+	{
+		_currentData = [];
+		var str:String = input.text;
+		if ( str == "" ) return false;
+		_currentData = _dataProvider.filter( function(element:String, index:int, arr:Array):Boolean {
+			return ( element.toLowerCase().indexOf( str.toLowerCase() , 0 ) == 0 );
+		});
+		return ( _currentData.length > 0 );
+	}
+	
+	]]></fx:Script>
+	
+		<s:TextInput 
+			id="input" 
+			change="onTextChange(event)" 
+			width="100%"
+		/>
+		
+		<mx:List 
+			id="lst" 
+			width="{input.width}" 
+			includeInLayout="false" 
+			visible="false" 
+			dataProvider="{_currentData}" 
+			itemClick="onItemSelect( event )" 
+			show="onShowMenu()"
+		/>
+		
+</s:VGroup >

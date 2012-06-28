@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow  xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	implements="component.InfoPanel" 
+	title="@Resource(key='SaveData', bundle='Panel')"
+	close="cancelSave()">
+	
+	<fx:Metadata>
+        [Event(name="onSaveClick", type="event.InfoPanelEvent")]
+		[Event(name="onClose", type="event.InfoPanelEvent")]
+	</fx:Metadata>
+
+	<fx:Script><![CDATA[
+		
+		import event.InfoPanelEvent;
+			
+		public function saveData():void 
+		{
+			var e:InfoPanelEvent = new InfoPanelEvent( InfoPanelEvent.ON_SAVE_CLICK );
+			e.title = titleField.text;
+			dispatchEvent( e );
+		}
+		
+		public function cancelSave():void 
+		{
+			dispatchEvent( new InfoPanelEvent( InfoPanelEvent.ON_CLOSE ) );
+		}
+	
+	]]></fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout paddingLeft="3" paddingRight="3" paddingBottom="3" />
+	</s:layout>
+	
+	<mx:Form>
+		
+		<mx:FormItem label="@Resource(key='Title', bundle='Panel')">
+			<mx:TextInput id="titleField" />
+		</mx:FormItem>
+		
+	</mx:Form>
+	
+	<s:HGroup>
+		<s:Button id="saveButton" label="@Resource(key='Save', bundle='Panel')" click="saveData()" />
+		<s:Button id="cancelButton" label="@Resource(key='Cancel', bundle='Panel')" click="cancelSave()" />
+	</s:HGroup>
+	
+</s:TitleWindow>

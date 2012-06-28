@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  >
+	
+	<fx:Metadata>
+		[Event(name="styleChange", type="event.StyleChangeEvent")]
+	</fx:Metadata>
+	
+	<fx:Script>
+		<![CDATA[
+		import component.vo.StyleVo;
+		import flash.geom.Matrix;
+		import flash.geom.Point;
+		import flash.events.Event;
+		import mx.events.MenuEvent;
+		import fxgeditor.parser.style.BitmapFill;
+		import fxgeditor.parser.utils.GeomUtil;
+		import fxgeditor.StyleObject;
+		import event.StyleChangeEvent;
+		
+		[Bindable]
+		private var _styleVo:StyleVo;
+		
+		private var _bitmapfill:BitmapFill;
+		
+		[Bindable]
+		private var _url:String;
+		
+		[Bindable]
+		private var _rotation:Number;
+		[Bindable]
+		private var _scaleX:Number = 1;
+		[Bindable]
+		private var _scaleY:Number = 1;
+		[Bindable]
+		private var _x:Number;
+		[Bindable]
+		private var _y:Number;
+		
+		[Bindable]
+		private var _fillMode:String = StyleVo.FILL_MODE[0];
+		
+		public function setBitmap( b:BitmapFill ):void
+		{
+			if ( !b ) return;
+			_bitmapfill = b;
+			_url = b.href;
+			_fillMode =b.fillMode;
+			
+			var mat:Matrix = b.matrix;
+			_x = mat.tx;
+			_y = mat.ty;
+			var tpt:Point = mat.transformPoint( new Point( _x, _y ) );
+			var radian:Number = GeomUtil.getAngle( new Point(), tpt );
+			_rotation = GeomUtil.radian2degree( radian );
+			mat.rotate( - radian );
+			_scaleX = mat.a;
+			_scaleY = mat.d;
+		}
+		
+		private function onImageChanged():void 
+		{
+			var o:StyleObject = new StyleObject();
+			bitmapfill.href = fillBitmapUrl.text;
+			o.fillBitmap = _bitmapfill;
+			dispatchEvent( new StyleChangeEvent(o , true) );
+		}
+		
+		private function onMatrixChange( e:Event ):void
+		{
+			var o:StyleObject = new StyleObject();
+			var mat:Matrix = new Matrix();
+			mat.scale( sxNs.value, syNs.value );
+			mat.rotate( GeomUtil.degree2radian( rotNs.value ) );
+			mat.translate( txNs.value, tyNs.value );
+			bitmapfill.matrix = mat;
+			o.fillBitmap = bitmapfill;
+			dispatchEvent( new StyleChangeEvent(o , true) );
+		}
+		
+		private function onFillModeChange( e:MenuEvent ):void
+		{
+			var o:StyleObject = new StyleObject();
+			bitmapfill.fillMode = e.label;
+			o.fillBitmap = _bitmapfill;
+			dispatchEvent( new StyleChangeEvent(o , true) );
+		}
+		
+		public function get styleVo():StyleVo { return _styleVo; }
+		public function set styleVo(value:StyleVo):void { _styleVo = value; }
+		
+		public function get bitmapfill():BitmapFill 
+		{ 
+			if ( !_bitmapfill ) _bitmapfill = new BitmapFill();
+			return _bitmapfill; 
+		}
+		public function set bitmapfill(value:BitmapFill):void {_bitmapfill = value;}
+		
+		]]>
+	</fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout paddingBottom="5" />
+	</s:layout>
+	
+	<s:Label text="URL" />
+	<s:TextArea id="fillBitmapUrl" width="100%" text="{_url}" />
+	<s:Button label="@Resource(key='Load', bundle='Panel')" click="onImageChanged()" />
+	
+	<mx:Form width="100%" height="100%" paddingLeft="0" paddingTop="0" paddingBottom="0" horizontalScrollPolicy="off">
+		<mx:FormItem label="@Resource(key='Rotate', bundle='Panel')">
+			<mx:NumericStepper 
+					id="rotNs" 
+					stepSize="1"
+					maximum="360"
+					change="onMatrixChange(event)" 
+					value="{_rotation}" 
+				/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='scaleX', bundle='Panel')">
+			<mx:NumericStepper 
+					id="sxNs" 
+					stepSize="0.1"
+					maximum="10"
+					change="onMatrixChange(event)" 
+					value="{_scaleX}" 
+				/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='scaleY', bundle='Panel')">
+			<mx:NumericStepper 
+					id="syNs" 
+					stepSize="0.1"
+					maximum="10"
+					change="onMatrixChange(event)" 
+					value="{_scaleY}" 
+				/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='translateX', bundle='Panel')">
+			<mx:NumericStepper 
+					id="txNs" 
+					stepSize="1"
+					maximum="1000"
+					change="onMatrixChange(event)" 
+					value="{_x}" 
+				/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='translateY', bundle='Panel')">
+			<mx:NumericStepper 
+					id="tyNs" 
+					stepSize="1"
+					maximum="1000"
+					change="onMatrixChange(event)" 
+					value="{_y}" 
+				/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='FillMode', bundle='Panel')">
+			<mx:PopUpMenuButton
+					id="strokeLinecap" 
+					label="{_fillMode}" 
+					dataProvider="{StyleVo.FILL_MODE}" 
+					itemClick="onFillModeChange(event)" 
+					openAlways="true"
+				/>
+		</mx:FormItem>
+		
+	</mx:Form>
+	
+	
+</s:Group>

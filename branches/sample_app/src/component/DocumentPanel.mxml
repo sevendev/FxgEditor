@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow  xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" 
+	implements="component.InfoPanel"
+	title="@Resource(key='NewDocument', bundle='Panel')" 
+	close="close()">
+		
+	<fx:Metadata>
+		[Event(name="onCreate", type="event.InfoPanelEvent")]
+		[Event(name="onClose", type="event.InfoPanelEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+		
+	import event.InfoPanelEvent;
+		
+	public static const DEFAULT_WIDTH:Number = 800;
+	public static const DEFAULT_HEIGHT:Number = 600;
+	
+	private function create():void
+	{
+		var evt:InfoPanelEvent = new InfoPanelEvent( InfoPanelEvent.ON_CREATE );
+		evt.documentWidth = widthNum.value;
+		evt.documentHeight = HeightNum.value;
+		dispatchEvent( evt );
+	}
+	
+	private function close():void 
+	{
+		dispatchEvent( new InfoPanelEvent( InfoPanelEvent.ON_CLOSE ) );
+	}
+		
+		
+	]]></fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout  paddingLeft="3" paddingRight="3" paddingBottom="3" />
+	</s:layout>
+
+	<mx:Form>
+		<mx:FormItem label="@Resource(key='Width', bundle='Panel')">
+			<mx:NumericStepper 
+				id="widthNum"
+				minimum="100" 
+				maximum="1000" 
+				value="{DEFAULT_WIDTH}" 
+			/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="@Resource(key='Height', bundle='Panel')">
+			<mx:NumericStepper 
+				id="HeightNum"
+				minimum="100" 
+				maximum="1000" 
+				value="{DEFAULT_HEIGHT}" 
+			/>
+		</mx:FormItem>
+	</mx:Form>
+	
+	<s:HGroup>
+		<s:Button label="@Resource(key='OK', bundle='Panel')" click="create()" />
+		<s:Button label="@Resource(key='Cancel', bundle='Panel')" click="close()" />
+	</s:HGroup>
+	
+	
+</s:TitleWindow>

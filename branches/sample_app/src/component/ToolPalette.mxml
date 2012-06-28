@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	xmlns:button="component.custom.button.*"
+	styleName="tool" 
+	title=""
+	controlBarVisible="false" 
+	autoLayout="true"
+	creationComplete="init()" >
+	
+	<fx:Metadata>
+		[Event(name="createItem", type="event.ToolPaletteEvent")]
+		[Event(name="drawPath", type="event.ToolPaletteEvent")]
+		[Event(name="cancelAll", type="event.ToolPaletteEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import event.ToolPaletteEvent;
+	import mx.controls.Button;
+	
+	public static const TOOL_BUTTON_WIDTH:Number = 40;
+
+	public function releaseSelection():void
+	{
+		for ( var i:int = 0 ; i < this.numElements ; i++ ) {
+			var btn:Button = this.getElementAt( i ) as Button;
+			if( btn ) btn.selected = false;
+		}
+	}
+	
+	private function createItem( type:String , e:MouseEvent ):void 
+	{
+		if( hasSelection() ){
+			releaseSelection();
+			dispatchEvent( new ToolPaletteEvent( ToolPaletteEvent.CANCEL_ALL ) );
+		}
+		var evt:ToolPaletteEvent = new ToolPaletteEvent( ToolPaletteEvent.CREATE_ITEM );
+		evt.itemType = type;
+		dispatchEvent( evt );
+		e.currentTarget.selected = true;
+	}
+	
+	private function drawPath( e:MouseEvent ):void 
+	{
+		if( hasSelection() ){
+			releaseSelection();
+			dispatchEvent( new ToolPaletteEvent( ToolPaletteEvent.CANCEL_ALL ) );
+		}
+		dispatchEvent( new ToolPaletteEvent( ToolPaletteEvent.DRAW_PATH ) );
+		e.currentTarget.selected = true;
+	}
+	
+	private function showCode():void
+	{
+		dispatchEvent( new ToolPaletteEvent( ToolPaletteEvent.CANCEL_ALL ) );
+		dispatchEvent( new ToolPaletteEvent( ToolPaletteEvent.SHOW_CODE ) );
+	}
+	
+	private function hasSelection():Boolean
+	{
+		for ( var i:int = 0 ; i < this.numElements ; i++ ) {
+			var btn:Button = this.getElementAt( i ) as Button;
+			if ( btn && btn.selected ) 
+				return true;
+		}
+		return false;
+	}
+	
+	private function init():void 
+	{
+		for ( var i:int = 0 ; i < this.numElements ; i++ ) {
+			var btn:Button = this.getElementAt( i ) as Button;
+			if ( btn ) btn.label = "";
+		}
+		this.width = TOOL_BUTTON_WIDTH + 5;
+	}
+
+	]]></fx:Script>
+	
+	<fx:Style>
+		.toolBtn{
+			 cornerRadius: 8;
+			 fillColors: #FFFFFF, #DDDDDD;
+			 fillAlphas: 0.5, 0.5;
+			 fillColorRatios: 0, 255;
+		}
+	</fx:Style>
+	
+	<s:layout>
+		<s:VerticalLayout horizontalAlign="center" verticalAlign="middle" gap="5" paddingTop="5" paddingBottom="5" />
+	</s:layout>
+	
+	<button:IgnoreKeyButton label="Draw" click="drawPath(event )" icon="@Embed(source='../asset/interface/draw.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}" />
+		
+	<button:IgnoreKeyButton label="Path" click="createItem('Path' ,event )" icon="@Embed(source='../asset/interface/path.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}" />
+	<button:IgnoreKeyButton label="Ellipse" click="createItem('Ellipse' ,event )" icon="@Embed(source='../asset/interface/ellipse.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	<button:IgnoreKeyButton label="Rect" click="createItem('Rect' ,event )" icon="@Embed(source='../asset/interface/rect.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	<button:IgnoreKeyButton label="Line" click="createItem('Line' ,event )" icon="@Embed(source='../asset/interface/line.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	<button:IgnoreKeyButton label="Image" click="createItem('BitmapGraphic' ,event )" icon="@Embed(source='../asset/interface/image.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	<button:IgnoreKeyButton label="Text" click="createItem('RichText' ,event )" icon="@Embed(source='../asset/interface/text.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	
+	<button:IgnoreKeyButton label="Code" click="showCode()" icon="@Embed(source='../asset/interface/fxg.png')" styleName="toolBtn" width="{TOOL_BUTTON_WIDTH}"/>
+	
+</s:TitleWindow  >

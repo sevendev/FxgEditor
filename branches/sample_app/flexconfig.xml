@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<flex-config>
+	
+	<target-player>10.0.0</target-player>
+	<default-background-color>#FFFFFF</default-background-color>
+	<default-frame-rate>30</default-frame-rate>
+	<default-size>
+		<width>1000</width>
+		<height>800</height>
+	</default-size>
+
+
+</flex-config>

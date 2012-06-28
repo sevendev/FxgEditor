@@ -1,0 +1,352 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"  
+	xmlns:comp="component.*" 
+	xmlns:color="component.color.*" 
+	xmlns:gradient="component.color.gradient.*"
+	implements="component.StylePanel" 
+	styleName="stylePanel" 
+	width="190"
+	title="{styleVo.itemType}" 
+	mouseEnabled="true">
+		
+	<fx:Metadata>
+        [Event(name="styleChange", type="event.StyleChangeEvent")]
+	</fx:Metadata>
+	
+	<fx:Script><![CDATA[
+		import event.PanelEvent;
+		import flash.events.Event;
+		import flash.geom.Matrix;
+		import mx.events.SliderEvent;
+		import mx.events.NumericStepperEvent;
+		import mx.events.ItemClickEvent;
+		import mx.events.MenuEvent;
+		import mx.events.ColorPickerEvent;
+		import mx.resources.ResourceManager;
+		
+		import fxgeditor.parser.style.IGradient;
+		import fxgeditor.parser.style.*;
+		import fxgeditor.StyleObject;
+		import event.StyleChangeEvent;
+		import component.vo.StyleVo;
+
+		[Bindable]
+		private var styleVo:StyleVo = new StyleVo();
+		
+		public function setItemStyle( o:StyleObject ):void
+		{
+			styleVo = new StyleVo();
+			itemName.text = o.id;
+			styleVo.fillColorValue = o.fillColor;
+			styleVo.strokeColorValue = o.strokeColor;
+			styleVo.fillAlphaValue = isNaN( o.fill_opacity ) ? 1 : o.fill_opacity;
+			styleVo.strokeAlphaValue = isNaN( o.stroke_opacity ) ? 1 : o.stroke_opacity;
+			styleVo.strokeWidthValue = o.stroke_width;
+			styleVo.alphaValue = o.opacity;
+			
+			styleVo.strokeMiterlimitValue = isNaN( o.stroke_miterlimit ) ? 0 : o.stroke_miterlimit;
+			styleVo.strokeLinecap = o.stroke_linecap ? o.stroke_linecap : StyleVo.CAP_STYLES[0] ;
+			styleVo.strokeLineJoin = o.stroke_linejoin ? o.stroke_linejoin: StyleVo.JOINT_STYLES[0];
+			
+			styleVo.fillGradation = o.fillGradient;
+			styleVo.strokeGradation = o.strokeGradient;
+			styleVo.fillBitmap = o.fillBitmap;
+			styleVo.filters = o.filters;
+			styleVo.colorTransform = o.colorTransform;
+			
+			noFillBox.selected = o.noFill;
+			
+			//if ( fillMenu ) fillPanelInit();
+			//if ( strokeMenu ) strokePanelInit();
+		}
+		
+		public function set type( t:String ):void { styleVo.itemType = t; }
+		public function get type():String { return styleVo.itemType; }
+		
+		private function onNameChange( e:Event ):void 
+		{
+			onStyleChange( "id", itemName.text );
+		}
+		
+		private function onFillColorChange( e:ColorPickerEvent ):void 
+		{
+			onStyleChange( "fillColor" , e.color );
+			noFillBox.selected = false;
+		}
+		
+		private function onNoFill():void 
+		{
+			onStyleChange( "noFill", noFillBox.selected );
+		}
+		
+		private function onStrokeColorChange( e:ColorPickerEvent ):void 
+		{
+			onStyleChange( "strokeColor" , e.color );
+		}
+		
+		private function onFillAlphaChange( e:Event ):void 
+		{
+			onStyleChange( "fill_opacity" , e.currentTarget.value  );
+		}
+		
+		private function onStrokeAlphaChange( e:Event ):void 
+		{
+			onStyleChange( "stroke_opacity" , e.currentTarget.value  );
+		}
+		
+		private function onStrokeWidthChange( e:Event ):void 
+		{
+			onStyleChange( "stroke_width" , e.currentTarget.value );
+		}
+
+		private function onCapStyleChange( e:MenuEvent ):void 
+		{
+			onStyleChange( "stroke_linecap" , e.label  );
+			strokeLinecap.label = e.label;
+		}
+		
+		private function onJointStyleChange( e:MenuEvent ):void 
+		{	
+			onStyleChange( "stroke_linejoin" , e.label  );
+			strokeJointStyle.label = e.label;
+		}
+		
+		private function onStrokeMiterlimitChange( e:NumericStepperEvent ):void 
+		{
+			onStyleChange( "stroke_miterlimit" , e.value  );
+		}
+		
+		private function dispatchGradient( e:Event ):void
+		{
+			if ( e.currentTarget == fillGrad ) 
+			{
+				onStyleChange( "fillGradient" , fillGrad.gradient as IGradient  );
+				noFillBox.selected = false;
+			}
+			if ( e.currentTarget == strokeGrad ) 
+				onStyleChange( "strokeGradient" , strokeGrad.gradient as IGradient );
+
+		}
+		
+		private function onStyleChange( prop:String , val:Object ):void
+		{
+			var o:StyleObject = new StyleObject();
+			o[prop] = val;
+			dispatchEvent( new StyleChangeEvent( o ) );
+		}
+		
+		//Fill Stroke Panel
+		
+		private function fillPanelInit():void 
+		{
+			fillMenu.dataProvider = [	ResourceManager.getInstance().getString("Panel", "Flat"), 
+										ResourceManager.getInstance().getString("Panel", "Gradient"),
+										ResourceManager.getInstance().getString("Panel", "BitmapFill")];
+			if( styleVo.fillGradation )
+				fillStack.selectedIndex = fillMenu.selectedIndex = 1;
+			else if ( styleVo.fillBitmap )
+				fillStack.selectedIndex = fillMenu.selectedIndex = 2;
+			else
+				fillStack.selectedIndex = fillMenu.selectedIndex = 0;
+		}
+		
+		private function fillModeChange( e:ItemClickEvent ):void
+		{
+			if ( e.label == ResourceManager.getInstance().getString("Panel", "Flat") ) 
+				fillStack.selectedChild = fillFlatBox;
+			else if ( e.label == ResourceManager.getInstance().getString("Panel", "Gradient") )
+				fillStack.selectedChild = fillGradBox;
+			else if ( e.label == ResourceManager.getInstance().getString("Panel", "BitmapFill") ) 
+				fillStack.selectedChild=fillBitmapBox;
+		}
+		
+		private function strokePanelInit():void 
+		{
+			strokeMenu.dataProvider = [	ResourceManager.getInstance().getString("Panel", "Flat"), 
+										ResourceManager.getInstance().getString("Panel", "Gradient"),
+										ResourceManager.getInstance().getString("Panel", "Style")];
+			if( styleVo.strokeGradation )
+				 strokeStack.selectedIndex = strokeMenu.selectedIndex = 1;
+				 
+		}
+		
+		private function strokeModeChange( e:ItemClickEvent ):void
+		{
+			if ( e.label == ResourceManager.getInstance().getString("Panel", "Flat") )  
+				strokeStack.selectedChild =  strokeFlatBox;
+			else if ( e.label == ResourceManager.getInstance().getString("Panel", "Gradient") ) 
+				strokeStack.selectedChild = strokeGradBox;
+			else if ( e.label == ResourceManager.getInstance().getString("Panel", "Style") )  
+				strokeStack.selectedChild = strokeSettingBox;
+		}
+		
+		private function editStrokeGradient():void
+		{
+			dispatchEvent( new PanelEvent( PanelEvent.EDIT_STROKE_GRADIENT ) );
+		}
+		
+		private function editFillGradient():void
+		{
+			dispatchEvent( new PanelEvent( PanelEvent.EDIT_FILL_GRADIENT ) );
+		}	
+		
+	]]></fx:Script>
+	
+	<s:layout>
+		<s:VerticalLayout paddingBottom="5" />
+	</s:layout>
+	
+	<s:TextInput id="itemName" width="100%" change="onNameChange( event );" />
+	
+	<mx:TabNavigator id="tn" width="100%" color="0x323232" paddingBottom="5" resizeToContent="true">
+	
+	<mx:VBox id="fillBox" label="@Resource(key='Fill', bundle='Panel')" horizontalScrollPolicy="off" verticalScrollPolicy="off" styleName="stylePanel">
+		
+		<mx:CheckBox id="noFillBox" label="@Resource(key='NoFill', bundle='Panel')" change="onNoFill();" />
+		
+		<mx:ToggleButtonBar id="fillMenu" itemClick="fillModeChange(event);" creationComplete="fillPanelInit()"/>
+		
+		<mx:ViewStack id="fillStack" width="100%" height="100%" resizeToContent="true">
+			
+			<mx:VBox id="fillFlatBox" horizontalAlign="center">
+				<color:ColorWheelSet id="fillColor" 
+					rgbValue="{styleVo.fillColorValue}" 
+					change="onFillColorChange(event);" 
+				/>
+				<s:Label text="@Resource(key='Opacity', bundle='Panel')" width="100%" />
+				<s:HSlider
+					minimum="0"
+					maximum="1"
+					snapInterval="0.01"
+					width="{fillColor.width}"
+					change="onFillAlphaChange(event)"
+					id="fillAlpha"
+					liveDragging="true"
+					value="{styleVo.fillAlphaValue}"
+				/>
+			</mx:VBox>
+			
+			<mx:VBox id="fillGradBox" horizontalAlign="center">
+				<s:Button label="@Resource(key='EditDirection', bundle='Panel')" click="editFillGradient()" />
+				<gradient:Gradation id="fillGrad" 
+					change="dispatchGradient( event )" 
+					gradient="{ styleVo.fillGradation }"
+					mouseEnabled="true"
+				/>
+			</mx:VBox>
+			
+			<mx:Box id="fillBitmapBox" >
+				<comp:BitmapPanel id="fillBitmapPanel" creationComplete="fillBitmapPanel.setBitmap( styleVo.fillBitmap )" width="{fillMenu.width}" />
+			</mx:Box>
+			
+		</mx:ViewStack>
+	</mx:VBox>
+	
+	<mx:VBox id="strokeBox" label="@Resource(key='Stroke', bundle='Panel')" height="100%">
+			<mx:VBox id="strokeColorBox" label="Stroke Color" width="100%" height="100%" paddingTop="3" >
+				<mx:ToggleButtonBar id="strokeMenu" itemClick="strokeModeChange(event);" creationComplete="strokePanelInit()"/>
+		
+				<mx:ViewStack id="strokeStack" width="100%" height="100%" resizeToContent="true">
+					
+					<mx:VBox id="strokeFlatBox" horizontalAlign="center" >
+						<color:ColorWheelSet id="strokeColor" 
+							rgbValue="{styleVo.strokeColorValue}" 
+							change="onStrokeColorChange(event);" 
+						/>
+						<s:Label text="@Resource(key='Opacity', bundle='Panel')" />
+						<s:HSlider
+							minimum="0"
+							maximum="1"
+							snapInterval="0.01"
+							width="{strokeColor.width}"
+							change="onStrokeAlphaChange(event)"
+							id="strokeAlpha"
+							liveDragging="true"
+							value="@{styleVo.strokeAlphaValue}"
+						/>
+					</mx:VBox>
+					
+					<mx:VBox id="strokeGradBox" horizontalAlign="center" >
+						<mx:Button label="@Resource(key='EditDirection', bundle='Panel')" click="editStrokeGradient()" />
+						<gradient:Gradation id="strokeGrad" 
+							change="dispatchGradient( event )" 
+							gradient="{ styleVo.strokeGradation }"
+							mouseEnabled="true"
+						/>
+					</mx:VBox>
+					
+					<mx:VBox id="strokeSettingBox" >
+						<s:Label text="@Resource(key='StrokeSize', bundle='Panel')" />
+						<s:HSlider
+							minimum="0"
+							maximum="60"
+							snapInterval="0.1"
+							width="{fillStack.width}"
+							change="onStrokeWidthChange(event)"
+							id="strokeWidth"
+							liveDragging="true"
+							value="@{styleVo.strokeWidthValue}"
+						/>
+					
+						<mx:Form maxWidth="{strokeWidth.width}" height="100%" paddingLeft="0" paddingTop="0" paddingBottom="0" horizontalScrollPolicy="off">
+							<mx:FormItem label="@Resource(key='CapStyle', bundle='Panel')">
+								<mx:PopUpMenuButton
+									id="strokeLinecap" 
+									label="{styleVo.strokeLinecap}" 
+									dataProvider="{StyleVo.CAP_STYLES}" 
+									itemClick="onCapStyleChange(event)"
+									maxWidth="{strokeStack.width / 2}"
+									openAlways="true" 
+								/>
+							</mx:FormItem>
+							
+							<mx:FormItem label="@Resource(key='JointStyle', bundle='Panel')">
+								<mx:PopUpMenuButton 
+									id="strokeJointStyle" 
+									label="{styleVo.strokeLineJoin}" 
+									dataProvider="{StyleVo.JOINT_STYLES}" 
+									itemClick="onJointStyleChange(event)" 
+									maxWidth="{strokeStack.width / 2}"
+									openAlways="true"
+								/>
+							</mx:FormItem>
+							
+							<mx:FormItem label="@Resource(key='MiterLimit', bundle='Panel')">
+								<mx:NumericStepper 
+									id="strokeMiterlimit" 
+									stepSize="0.1"
+									maximum="10.0"
+									change="onStrokeMiterlimitChange(event)" 
+									value="@{styleVo.strokeMiterlimitValue}" 
+								/>
+							</mx:FormItem>
+						</mx:Form>
+					</mx:VBox>
+					
+				</mx:ViewStack>
+			</mx:VBox>
+			
+	</mx:VBox>
+	
+	<mx:Box label="@Resource(key='Prop', bundle='Panel')" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<comp:PropertyPanel 
+			id="transBox" 
+			styleVo="{styleVo}"
+			width="{fillMenu.width}"
+		/>
+		<s:Label text="@Resource(key='ColorTrans', bundle='Panel')" paddingLeft="5" />
+		<comp:ColorTransPanel id="objectCt"
+			styleVo="{styleVo}"
+		/>
+	</mx:Box>
+	
+	<mx:Box label="@Resource(key='Filter', bundle='Panel')" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+			<comp:FilterPanel
+			id="objectFilters"
+			styleVo="{styleVo}"
+			width="{fillMenu.width}"
+		/>
+	</mx:Box>
+	</mx:TabNavigator>
+	
+</s:TitleWindow>
